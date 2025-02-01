@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
+import java.lang.reflect.Modifier;
 
 /**
  * The type Dynamic object auto closeable invocation handler.
@@ -112,7 +113,6 @@ public class DynamicObjectInvocationHandler<T> extends BaseDynamicObjectHandler<
      * @param method      the method
      * @param arguments   the arguments
      * @param superObject the super object
-     * @param superCall   the super call
      * @return the object
      * @throws Exception the exception
      * @since 0.1.0
@@ -121,8 +121,7 @@ public class DynamicObjectInvocationHandler<T> extends BaseDynamicObjectHandler<
     public Object interceptMethod(
             @Origin Method method,
             @AllArguments Object[] arguments,
-            @Super(strategy = Super.Instantiation.UNSAFE, proxyType = TargetType.class) Object superObject,
-            @SuperCall Callable<T> superCall) throws Exception {
+            @Super(strategy = Super.Instantiation.UNSAFE, proxyType = TargetType.class) Object superObject) throws Exception {
         if (v8ValueObject != null) {
             V8Runtime v8Runtime = v8ValueObject.getV8Runtime();
             try (V8ValueObject v8ValueSuper = v8Runtime.toV8Value(superObject)) {
@@ -176,6 +175,8 @@ public class DynamicObjectInvocationHandler<T> extends BaseDynamicObjectHandler<
                 v8Runtime.getGlobalObject().delete(SUPER);
             }
         }
-        return superCall.call();
+        if(Modifier.isAbstract(method.getModifiers()))
+            return null;
+        return method.invoke(superObject,arguments);
     }
 }

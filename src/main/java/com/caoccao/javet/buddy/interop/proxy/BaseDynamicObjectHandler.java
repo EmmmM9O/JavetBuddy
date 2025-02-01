@@ -117,11 +117,15 @@ public abstract class BaseDynamicObjectHandler<T> implements AutoCloseable {
      */
     @SuppressWarnings("unchecked")
     protected Class<T> getObjectClass() {
-        DynamicType.Builder<T> builder = new ByteBuddy().subclass(type, CONSTRUCTOR_STRATEGY);
+        DynamicType.Builder<?> builder;
+        if(type.isInterface())
+            builder = new ByteBuddy().subclass(Object.class).implement(type);
+        else 
+            builder = new ByteBuddy().subclass(type, CONSTRUCTOR_STRATEGY);
         if (!AutoCloseable.class.isAssignableFrom(type)) {
             builder = builder.implement(AutoCloseable.class);
         }
-        try (DynamicType.Unloaded<T> unloadedType = builder
+        try (DynamicType.Unloaded<?> unloadedType = builder
                 .method(ElementMatchers.isPublic())
                 .intercept(MethodDelegation.to(this))
                 .make()) {

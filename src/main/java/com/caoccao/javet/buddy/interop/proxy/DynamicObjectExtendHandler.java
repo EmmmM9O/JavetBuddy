@@ -25,6 +25,7 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bind.annotation.*;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
@@ -60,7 +61,6 @@ public class DynamicObjectExtendHandler<T> extends BaseDynamicObjectHandler<T> {
      * @param arguments   the arguments
      * @param superObject the super object
      * @param thisObject  the this object
-     * @param superCall   the super call
      * @return the object
      * @throws Exception the exception
      * @since 0.1.0
@@ -70,8 +70,7 @@ public class DynamicObjectExtendHandler<T> extends BaseDynamicObjectHandler<T> {
             @Origin Method method,
             @AllArguments Object[] arguments,
             @Super(strategy = Super.Instantiation.UNSAFE, proxyType = TargetType.class) Object superObject,
-            @This Object thisObject,
-            @SuperCall Callable<T> superCall) throws Exception {
+            @This Object thisObject) throws Exception {
         if (v8ValueObject != null) {
             V8Runtime v8Runtime = v8ValueObject.getV8Runtime();
             try (V8ValueObject v8ValueSuper = v8Runtime.toV8Value(superObject);
@@ -124,6 +123,8 @@ public class DynamicObjectExtendHandler<T> extends BaseDynamicObjectHandler<T> {
                 v8Runtime.getGlobalObject().delete(SUPER);
             }
         }
-        return superCall.call();
+        if(Modifier.isAbstract(method.getModifiers()))
+            return null;
+        return method.invoke(superObject,arguments);
     }
 }

@@ -188,6 +188,42 @@ public class TestJavetReflectionObjectFactory {
         v8Runtime.getGlobalObject().delete("a");
     }
 
+    @Test
+    public void testExtendInterface() throws JavetException {
+        MockExtend mockExtend = new MockExtend(TestInterface.class);
+        v8Runtime.getGlobalObject().bind(mockExtend);
+        v8Runtime.getGlobalObject().set("TestInterface", TestInterface.class);
+        String codeString = "let ChildClass = extend(TestInterface, {\n" +
+                "  test: () => 'TestInterface',\n" +
+                "});\n" +
+                "let obj = new ChildClass();\n" +
+                "obj.test()";
+        assertEquals(
+                "TestInterface",
+                v8Runtime.getExecutor(codeString).executeString());
+        v8Runtime.getExecutor("TestInterface = undefined; obj = undefined;").executeVoid();
+        v8Runtime.getGlobalObject().unbind(mockExtend);
+        v8Runtime.getGlobalObject().delete("TestInterface");
+    }
+
+    @Test
+    public void testExtendAbstract() throws JavetException {
+        MockExtend mockExtend = new MockExtend(TestAbstract.class);
+        v8Runtime.getGlobalObject().bind(mockExtend);
+        v8Runtime.getGlobalObject().set("TestAbstract", TestAbstract.class);
+        String codeString = "let ChildClass = extend(TestAbstract, {\n" +
+                "  test: () => 'TestAbstract',\n" +
+                "});\n" +
+                "let obj = new ChildClass();\n" +
+                "obj.test()";
+        assertEquals(
+                "TestAbstract",
+                v8Runtime.getExecutor(codeString).executeString());
+        v8Runtime.getExecutor("TestAbstract = undefined; obj = undefined;").executeVoid();
+        v8Runtime.getGlobalObject().unbind(mockExtend);
+        v8Runtime.getGlobalObject().delete("TestAbstract");
+    }
+
     public static class MockExtend {
         private final Class<?> clazz;
 
@@ -266,5 +302,13 @@ public class TestJavetReflectionObjectFactory {
         public String toJson() {
             return "{\"name\":\"" + name + "\",\"value\":\"" + value + "\"}";
         }
+    }
+
+    public static interface TestInterface{
+        public String test();
+    }
+
+    public static interface TestAbstract{
+        public abstract String test();
     }
 }
